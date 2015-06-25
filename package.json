@@ -1,0 +1,23 @@
+{
+  "name": "powder-simple",
+  "version": "0.1.0",
+  "description": "powder-simple by huhu",
+  "keywords": [
+    "powder",
+    "web",
+    "app"
+  ],
+  "homepage": "https://github.com/cjinfu",
+  "author": "huhu",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-buffer": "0.0.2",
+    "gulp-uglify": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=0.10.0",
+    "npm": ">=1.2.10"
+  }
+}

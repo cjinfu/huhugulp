@@ -1,0 +1,17 @@
+{
+    "rules": {
+        "web": {
+            "ext": ["html", "htm", "ico"],
+            "compress": 0,
+            "source": "./dist/",
+            "target": "./webserver"
+        },
+        "cdn": {
+            "recursive": 1,
+            "compress": 0,
+            "ext": ["map", "js", "css", "png", "webp", "jpg", "jpeg", "gif"],
+            "source": "./dist/",
+            "target": "./cdn"
+        }
+    }
+}
