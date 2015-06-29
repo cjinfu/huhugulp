@@ -14,7 +14,12 @@
   "devDependencies": {
     "gulp": "^3.9.0",
     "gulp-buffer": "0.0.2",
-    "gulp-uglify": "^1.1.0"
+    "gulp-uglify": "^1.1.0",
+    "gulp-jshint": "^1.11.0",
+    "jshint-stylish": "^2.0.1",
+    "gulp-csslint": "^0.1.5",
+    "gulp-util": "^3.0.6",
+    "gulp-inline-source": "^2.0.0"
   },
   "engines": {
     "node": ">=0.10.0",

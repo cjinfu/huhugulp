@@ -1,38 +1,71 @@
 var gulp = require('gulp');
 var del = require('del');
+// 好像没用到
 var gulpif = require('gulp-if');
+// 方便多文件引用打包
 var browserify = require('browserify');
 var template = require('gulp-template-compile');
+// 从流变vinyl文件对象
 var source = require('vinyl-source-stream');
+// 从流变buffer
 var buffer = require('gulp-buffer');
+// 文本替换
 var replace = require('gulp-replace');
+// 添加md5
 var rev = require('gulp-rev');
 var clean = require('gulp-clean');
 var run = require('run-sequence');
+// 压缩html
 var minifyHTML = require('gulp-minify-html');
+// 压缩css
 var minifycss = require('gulp-minify-css');
+//丑化代码工具
 var uglify = require('gulp-uglify');
 var fs = require('fs');
 var savefile = require('gulp-savefile');
+
+// 代码inline工具
+var inline = require('gulp-inline-source');
+
+// 类underscore库，提供一堆通用utils函数
 var _ = require('lodash');
+
+// 同步工作
 var async = require('async');
 
 var project = require('./project');
 
-var urlCdn=project.cdn;//代码中使用：___cdn 替换cdn路径
-var urlWeb=project.root;//代码中使用：___web 替换web路径
-var timeline=new Date().getTime();//代码中使用：___timeline 替换时间戳
-//代码中使用：___md5字符戳的文件名将被md5 例如： test.js?___md5 ，支持的文件有js,css,img
+// 代码规范
+// jshint
+var jshint = require('gulp-jshint');
+// jshint report 3-rd party module
+var stylish = require('jshint-stylish');
+// csshint
+var csslint = require('gulp-csslint');
+var gutil = require('gulp-util');
 
+
+// 代码中使用：___cdn 替换cdn路径
+var urlCdn = project.cdn;
+
+// 代码中使用：___web 替换web路径
+var urlWeb = project.root;
+
+// 代码中使用：___timeline 替换时间戳
+// 代码中使用：___md5字符戳的文件名将被md5 例如： test.js?___md5 ，支持的文件有js,css,img
+var timeline=new Date().getTime();
+
+// 清理dev文件夹
 gulp.task('cleandev', function() {
     return gulp.src(['./dev/*'], {read: false})
         .pipe(clean());
 });
+// 清理dist文件夹
 gulp.task('cleandist', function() {
     return gulp.src(['./dist/*'], {read: false})
         .pipe(clean());
 });
-
+// 文件克隆
 gulp.task('filesclone', function(cb) {
     var q1=_.map([1], function(item) {
         return function(callback) {
@@ -73,7 +106,7 @@ gulp.task('import',function(){
                 return fs.readFileSync(b);
             }
         }))
-        .pipe(replace(/\_\_\_(cdn)/g, urlCdn))
+        .pipe(replace(/\_\_\_(cdnCss)/g, urlCdn.css))
         .pipe(replace(/\_\_\_(web)/g, urlWeb))
         .pipe(replace(/\_\_\_(timeline)/g, timeline))
         .pipe(gulp.dest('./dev/css/'));
@@ -81,6 +114,7 @@ gulp.task('import',function(){
 
 //<!-- #include file = "myfile.html" -->
 gulp.task('include',function(){
+
     return gulp.src(['./src/*.html'])
         .pipe(replace(/<\!--\s*#include file\s*=\s*"(.+?\.[html|css|js]+)"\s*-->/ig, function(a,b){
             // console.log(b);
@@ -89,7 +123,11 @@ gulp.task('include',function(){
                 return fs.readFileSync(b);
             }
         }))
-        .pipe(replace(/\_\_\_(cdn)/g, urlCdn))
+        .pipe(inline({'attribute': '___inline', 'compress': true}))
+        .pipe(replace(/\_\_\_(cdnCss)/g, urlCdn.css))
+        .pipe(replace(/\_\_\_(cdnJs)/g, urlCdn.js))
+        .pipe(replace(/\_\_\_(cdnImg)/g, urlCdn.Img))
+        .pipe(replace(/\_\_\_(cdn)/g, urlCdn.default))
         .pipe(replace(/\_\_\_(web)/g, urlWeb))
         .pipe(replace(/\_\_\_(timeline)/g, timeline))
         .pipe(gulp.dest('./dev/'));
@@ -111,7 +149,7 @@ gulp.task('browserify',function(cb){
                 .bundle()
                 .pipe(source(item))
                 .pipe(buffer())
-                .pipe(replace(/\_\_\_(cdn)/g, urlCdn))
+                .pipe(replace(/\_\_\_(cdnJs)/g, urlCdn.js))
                 .pipe(replace(/\_\_\_(web)/g, urlWeb))
                 .pipe(replace(/\_\_\_(timeline)/g, timeline))
                 .pipe(gulp.dest(devDir))
@@ -124,20 +162,6 @@ gulp.task('browserify',function(cb){
         cb(err, result);
     });
 
-    // var dir = './src/js/';
-    // var fireList = fs.readdirSync(dir);
-    // fireList.forEach(function(item){
-    //     if(fs.statSync(dir + item).isFile()){
-    //         return browserify(dir + item)
-    //             .bundle()
-    //             .pipe(source(item))
-    //             .pipe(buffer())
-    //             .pipe(replace(/\_\_\_(cdn)/g, urlCdn))
-    //             .pipe(replace(/\_\_\_(web)/g, urlWeb))
-    //             .pipe(replace(/\_\_\_(timeline)/g, timeline))
-    //             .pipe(gulp.dest('./dev/js/'));
-    //     }
-    // });
 });
 
 gulp.task('main', function() {
@@ -203,30 +227,6 @@ var G={};
 G.ift={};//全部文件列表
 G.usedkey={};//真正被使用的
 gulp.task('creatdist',['move-html','ift-img', 'ift-css', 'ift-js'] , function(){
-    // fs.readFile('./dist/ift-img.json',function(err, data){
-    //     if(err){
-    //         G.iftimg = {};
-    //     }else{ 
-    //         //console.log(data.length);
-    //         G.iftimg = require('./dist/ift-img.json');
-    //     }
-    // });
-    // fs.readFile('./dist/ift-css.json',function(err, data){
-    //     if(err){
-    //         G.iftcss = {};
-    //     }else{ 
-    //         //console.log(data.length);
-    //         G.iftcss = require('./dist/ift-css.json');
-    //     }
-    // });
-    // fs.readFile('./dist/ift-js.json',function(err, data){
-    //     if(err){
-    //         G.iftjs = {};
-    //     }else{ 
-    //         //console.log(data.length);
-    //         G.iftjs = require('./dist/ift-js.json');
-    //     }
-    // });
     try {
         G.iftimg = require('./dist/ift-img.json');
     } catch(e) {
@@ -344,4 +344,29 @@ gulp.task('filesclear',function(){
 
 gulp.task('dist', ['cleandev','cleandist'], function() {
     run('tmpl',['filesclone','import','include','browserify'],'creatdist',['compresscss','compressjs','compresshtml'],'filesclear');
+});
+
+
+// 检测代码规范
+// 检测js规范
+gulp.task('checkjs', function() {
+    return gulp.src('./src/js/*.js')
+           .pipe(jshint())
+           .pipe(jshint.reporter(stylish))
+});
+
+// css hint reporter
+var customReporter = function(file) {
+    gutil.log(gutil.colors.cyan(file.csslint.errorCount) + ' errors in ' + gutil.colors.magenta(file.path));
+
+    file.csslint.results.forEach(function(result) {
+        gutil.log(result.error.message + ' on line ' + result.error.line);
+    });
+};
+
+// 检测css规范
+gulp.task('checkcss', function() {
+  gulp.src('./src/css/**/*.css')
+    .pipe(csslint())
+    .pipe(csslint.reporter(customReporter));
 });
