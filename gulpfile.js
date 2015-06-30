@@ -24,9 +24,6 @@ var uglify = require('gulp-uglify');
 var fs = require('fs');
 var savefile = require('gulp-savefile');
 
-// 代码inline工具
-var inline = require('gulp-inline-source');
-
 // 类underscore库，提供一堆通用utils函数
 var _ = require('lodash');
 
@@ -43,9 +40,6 @@ var stylish = require('jshint-stylish');
 // csshint
 var csslint = require('gulp-csslint');
 var gutil = require('gulp-util');
-
-// 替换html tags
-var useref = require('gulp-useref');
 
 
 // 代码中使用：___cdn 替换cdn路径
@@ -116,18 +110,7 @@ gulp.task('import',function(){
 });
 
 //<!-- #include file = "myfile.html" -->
-// inline的文件不作复制
-var inlineFile = [];
-
 gulp.task('include',function(){
-
-    var inlineJs = function(source, context, next) {
-        var path = source.filepath.split('\\');
-        path = path[path.length - 1];
-        inlineFile.push(path);
-        next();
-    };
-
     return gulp.src(['./src/*.html'])
         .pipe(replace(/<\!--\s*#include file\s*=\s*"(.+?\.[html|css|js]+)"\s*-->/ig, function(a,b){
             // console.log(b);
@@ -136,7 +119,6 @@ gulp.task('include',function(){
                 return fs.readFileSync(b);
             }
         }))
-        .pipe(inline({'attribute': '___inline', 'compress': true, handlers:[inlineJs]}))
         .pipe(replace(/\_\_\_(cdnCss)/g, urlCdn.css))
         .pipe(replace(/\_\_\_(cdnJs)/g, urlCdn.js))
         .pipe(replace(/\_\_\_(cdnImg)/g, urlCdn.Img))
@@ -151,16 +133,11 @@ gulp.task('browserify',function(cb){
         devDir = './dev/js/';
     var fireList = fs.readdirSync(srcDir);
     var jss = [];
-    fireList.forEach(function(item){ 
-        if (inlineFile.indexOf(item) > -1) {
-            return;   
-        }
+    fireList.forEach(function(item){
         if(fs.statSync(srcDir + item).isFile()){
-            // console.log(item);
             jss.push(item);
         }
     });
-
     var q1 = _.map(jss, function(item) {
         return function(callback) {
             return browserify(srcDir + item)
@@ -183,7 +160,7 @@ gulp.task('browserify',function(cb){
 });
 
 gulp.task('main', function() {
-    run('tmpl', 'filesclone', 'include', ['import','browserify']);
+    run('tmpl',['filesclone','import','include','browserify']);
 });
 
 gulp.task('default', ['cleandev'], function() {
@@ -361,7 +338,7 @@ gulp.task('filesclear',function(){
 });
 
 gulp.task('dist', ['cleandev','cleandist'], function() {
-    run('tmpl','filesclone', 'include', ['import','browserify'],'creatdist',['compresscss','compressjs','compresshtml'],'filesclear');
+    run('tmpl',['filesclone','import','include','browserify'],'creatdist',['compresscss','compressjs','compresshtml'],'filesclear');
 });
 
 
