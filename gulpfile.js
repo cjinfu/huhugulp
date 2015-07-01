@@ -19,8 +19,11 @@ var run = require('run-sequence');
 var minifyHTML = require('gulp-minify-html');
 // 压缩css
 var minifycss = require('gulp-minify-css');
+var cleancss = require('clean-css');
 //丑化代码工具
 var uglify = require('gulp-uglify');
+var UglifyJS = require("uglify-js");
+
 var fs = require('fs');
 var savefile = require('gulp-savefile');
 
@@ -112,11 +115,37 @@ gulp.task('import',function(){
 //<!-- #include file = "myfile.html" -->
 gulp.task('include',function(){
     return gulp.src(['./src/*.html'])
-        .pipe(replace(/<\!--\s*#include file\s*=\s*"(.+?\.[html|css|js]+)"\s*-->/ig, function(a,b){
-            // console.log(b);
-            // console.log(fs.existsSync(b));
-            if (fs.existsSync(b)) {
-                return fs.readFileSync(b);
+        .pipe(replace(/<\!--\s*#include file\s*=\s*"(.+?\.[html|css|js]+)"\s*-->/ig, function(a,b) {
+            
+            if (!fs.existsSync(b)) {
+                return '';
+            }
+
+            var path = b.split('/');
+            path = path[path.length - 1];
+            var ext = path.split('.');
+            if (!ext[1]) {
+                return;
+            }
+            else {
+                var startTag = '';
+                var endTag = '';
+                switch(ext[1]){
+                    case 'js':
+                        startTag = '<script>';
+                        endTag = '</script>';
+                        return '<script>' + fs.readFileSync(b) + '</script>';
+                        console.log(UglifyJS.minify(fs.readFileSync(b, 'utf8'), {fromString: true}).code);
+                        return '<script>' + UglifyJS.minify(fs.readFileSync(b, 'utf8'), {fromString: true}).code + '</script>';
+                        break;
+                    case 'css':
+                        var cs = new cleancss();
+                        return '<style>' + cs.minify(fs.readFileSync(b)).styles + '</style>';
+                        break;
+                    case 'html': 
+                        return fs.readFileSync(b)
+                        break;
+                }
             }
         }))
         .pipe(replace(/\_\_\_(cdnCss)/g, urlCdn.css))
@@ -252,7 +281,7 @@ gulp.task('creatdist',['move-html','ift-img', 'ift-css', 'ift-js'] , function(){
             G.usedkey[key]=true;//被使用标记
             return name+G.ift[key];
         }else{
-            console.log('ERROR:'+key+' is undefined');
+            console.log('ERROR:' + key + ' is undefined');
         }
     };
     return gulp.src(['./dist/css/**','./dist/js/**','./dist/*.html'],{base:'dist'})

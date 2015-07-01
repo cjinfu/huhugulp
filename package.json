@@ -1,7 +1,7 @@
 {
-  "name": "powder-simple",
+  "name": "huhugulp",
   "version": "0.1.0",
-  "description": "powder-simple by huhu",
+  "description": "huhugulp by huhu & heyli",
   "keywords": [
     "powder",
     "web",
@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "gulp": "^3.9.0",
-    "gulp-buffer": "0.0.2",
+    "gulp-buffer": "^0.0.2",
     "gulp-uglify": "^1.1.0",
     "gulp-jshint": "^1.11.0",
     "jshint-stylish": "^2.0.1",
@@ -37,7 +37,9 @@
     "lodash.escape": "^2.4.1",
     "run-sequence": "^0.3.6",
     "style-loader": "^0.8.3",
-    "vinyl-source-stream": "^0.1.1"
+    "vinyl-source-stream": "^0.1.1",
+    "uglify-js": "^2.4.23",
+    "clean-css": "^3.3.4"
   },
   "engines": {
     "node": ">=0.10.0",
