@@ -44,6 +44,9 @@ var stylish = require('jshint-stylish');
 var csslint = require('gulp-csslint');
 var gutil = require('gulp-util');
 
+// 代码打包
+var zip = require('gulp-zip');
+
 
 // 代码中使用：___cdn 替换cdn路径
 var urlCdn = project.cdn;
@@ -135,12 +138,13 @@ gulp.task('include',function(){
                         startTag = '<script>';
                         endTag = '</script>';
                         return '<script>' + fs.readFileSync(b) + '</script>';
-                        console.log(UglifyJS.minify(fs.readFileSync(b, 'utf8'), {fromString: true}).code);
-                        return '<script>' + UglifyJS.minify(fs.readFileSync(b, 'utf8'), {fromString: true}).code + '</script>';
+                        // console.log(UglifyJS.minify(fs.readFileSync(b, 'utf8'), {fromString: true}).code);
+                        // return '<script>' + UglifyJS.minify(fs.readFileSync(b, 'utf8'), {fromString: true}).code + '</script>';
                         break;
                     case 'css':
                         var cs = new cleancss();
-                        return '<style>' + cs.minify(fs.readFileSync(b)).styles + '</style>';
+                        return '<style>' + fs.readFileSync(b) + '</style>';
+                        // return '<style>' + cs.minify(fs.readFileSync(b)).styles + '</style>';
                         break;
                     case 'html': 
                         return fs.readFileSync(b)
@@ -150,7 +154,7 @@ gulp.task('include',function(){
         }))
         .pipe(replace(/\_\_\_(cdnCss)/g, urlCdn.css))
         .pipe(replace(/\_\_\_(cdnJs)/g, urlCdn.js))
-        .pipe(replace(/\_\_\_(cdnImg)/g, urlCdn.Img))
+        .pipe(replace(/\_\_\_(cdnImg)/g, urlCdn.img))
         .pipe(replace(/\_\_\_(cdn)/g, urlCdn.default))
         .pipe(replace(/\_\_\_(web)/g, urlWeb))
         .pipe(replace(/\_\_\_(timeline)/g, timeline))
@@ -276,12 +280,12 @@ gulp.task('creatdist',['move-html','ift-img', 'ift-css', 'ift-js'] , function(){
         G.ift[key] = G.iftjs[key];
     }
     var md5 = function(match,name){
-        var key=match.replace(name,'').replace('?___md5','');
+        var key = match.replace(name,'').replace('?___md5','');
         if(G.ift[key]){
-            G.usedkey[key]=true;//被使用标记
+            G.usedkey[key] = true;//被使用标记
             return name+G.ift[key];
         }else{
-            console.log('ERROR:' + key + ' is undefined');
+            console.log('ERROR:'+key+' is undefined');
         }
     };
     return gulp.src(['./dist/css/**','./dist/js/**','./dist/*.html'],{base:'dist'})
@@ -393,4 +397,49 @@ gulp.task('checkcss', function() {
   gulp.src('./src/css/**/*.css')
     .pipe(csslint())
     .pipe(csslint.reporter(customReporter));
+});
+
+var removeHttp = function(url) {
+    return url.replace(/https?:\/\//, '');
+};
+
+var createUrl = function(path) {
+    var url = '';
+
+    for (key in path) {
+        url += path[key] + '/';
+    }
+
+    return url;
+};
+
+gulp.task('cleanPack', function() {
+    return gulp.src(['./pack', './archive.zip'], {read: false})
+        .pipe(clean());
+})
+
+gulp.task('zip', function() {
+    return gulp.src('./pack/**')
+                .pipe(zip('archive.zip'))
+                .pipe(gulp.dest('./'));
+});
+
+gulp.task('offline', function() {
+
+    var htmlPath = removeHttp(urlWeb).split('/');
+    gulp.src('./dist/*.html')
+        .pipe(gulp.dest('./pack/' + createUrl(htmlPath)));
+
+    var jsPath = removeHttp(urlCdn.js).split('/');
+    gulp.src('./dist/js/*.js')
+        .pipe(gulp.dest('./pack/' + createUrl(jsPath) + 'js/'));
+
+    var imgPath = removeHttp(urlCdn.img).split('/');
+    gulp.src('./dist/img/**/')
+        .pipe(gulp.dest('./pack/' + createUrl(imgPath) + 'img/'));
+
+})
+
+gulp.task('pack', function() {
+    run('cleanPack', 'offline');    
 });
